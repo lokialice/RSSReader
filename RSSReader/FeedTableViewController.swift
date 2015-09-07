@@ -121,18 +121,39 @@ class FeedTableViewController: UITableViewController,MWFeedParserDelegate,SideBa
         // Return the number of rows in the section.
         return feedItems.count
     }
-    //Mark // Table view Data Source
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return 50
-    }
-
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as! UITableViewCell
-
+        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as! FeedTableViewCell
+        cell.itemimageView.image = UIImage(named: "placeholder")
+        
         // Configure the cell...
-        let item = feedItems[indexPath.row] as MWFeedItem
-        cell.textLabel?.text = item.title
+        let item = feedItems[indexPath.row] as MWFeedItem?
+        cell.itemAuthorlbl.text = item?.author
+        cell.itemTittlelbl.text = item?.title
+        if item?.content != nil {
+            let htmlContent = item!.content as NSString
+            var imageSource = ""
+            
+            let rangOfString = NSMakeRange(0, htmlContent.length)
+            let regex = NSRegularExpression(pattern: "(<img.*?src=\")(.*?)(\".*?>)", options: nil, error: nil)
+            
+            if htmlContent.length > 0 {
+                let match = regex?.firstMatchInString(htmlContent as String, options: nil, range: rangOfString)
+                if match != nil {
+                    let imageURL = htmlContent.substringWithRange(match!.rangeAtIndex(2)) as NSString
+                    println(imageURL)
+                    
+                    if NSString(string: imageURL.lowercaseString).rangeOfString("feedburner").location == NSNotFound {
+                        imageSource = imageURL as String
+                    }
+                }
+            }
+            if imageSource != "" {
+                cell.itemimageView.setImageWithURL(NSURL(string: imageSource)!,placeholderImage:UIImage(named: "placeholder"))
+            }else {
+                cell.itemimageView.image = UIImage(named: "placeholder")
+            }
+        }
 
         return cell
     }
